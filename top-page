@@ -1,7 +1,7 @@
 {
    "README" : "This app renders the site's top level page\n\nIt also renders pages for any utility found under\n/utilities which has a 'main' function.",
    "_dateCreated" : "Mon Apr  8 16:24:40 2013",
-   "_useCount" : 301,
+   "_useCount" : 309,
    "api-entry-points" : "// The names on the left represent request patterns that will be accepted.\n// The names on the right refer to the corresponding request handler named in /api-handler.\n\n{\n  GET/                      show-top-page\n  GET/utilities/~util-path* run-utility\n}",
    "api-handlers" : {
       "run-utility" : "(= path (join / ['' utilities @$req-util-path]))\n(def-hash-fn $self $path main)\n(if (fn? $main) (return (main)))\n\n(reply-html (html-app-template\n  (html-page-error \"Nothing found for $path\")))",
@@ -54,12 +54,18 @@
       },
       "110-demo" : {
          "README" : "A pattern based word generator.",
-         "en-letter-stats" : "# English letter frequencies from\n#  http://www.math.cornell.edu/~mec/2003-2004/cryptography/subs/frequencies.html\n{\n  consonants {\n    T [ 16587 9.100000 ]\n    N [ 12666 6.950000 ]\n    S [ 11450 6.280000 ]\n    R [ 10977 6.020000 ]\n    H [ 10795 5.920000 ]\n    D [ 7874 4.320000 ]\n    L [ 7253 3.980000 ]\n    C [ 4943 2.710000 ]\n    M [ 4761 2.610000 ]\n    F [ 4200 2.300000 ]\n    Y [ 3853 2.110000 ]\n    W [ 3819 2.090000 ]\n    G [ 3693 2.030000 ]\n    P [ 3316 1.820000 ]\n    B [ 2715 1.490000 ]\n    V [ 2019 1.110000 ]\n    K [ 1257 0.690000 ]\n    X [ 315 0.170000 ]\n    Q [ 205 0.110000 ]\n    J [ 188 0.100000 ]\n    Z [ 128 0.070000 ]\n  }\n  vowels {\n    E [ 21912 12.020000 ]\n    A [ 14810 8.120000 ]\n    O [ 14003 7.680000 ]\n    I [ 13318 7.310000 ]\n    U [ 5246 2.880000 ]\n  }\n}",
          "html-generated-words" : "(fn ( -- words)\n  (= words\n    (sort-alpha\n      (map-list make-one-word\n        (.. 1 $n-words))))\n  \n[\n  <table>\n  (foreach i (.. 0 15) [\n    <tr>\n    (foreach j (.. 0 15) [\n      <td> (ith $words (+ (* $j 16) $i)) </td>\n    ])\n    </tr>\n  ])\n  </table>\n])",
          "main" : "(= title 'random name/word generator')\n(= blurb '\nPick out some made up names/words you like.\nThe pattern is consonant-vowel-consonant-consonant-vowel-consonant.\n')\n\n(= consonants (split '' bcdfghjklmnpqrstvwxyz))\n(= vowels     (split '' aeiou))\n(= n-words    (* 16 16))\n\n(def-hash-fn $self {\n  . [\n    html-generated-words\n    make-one-word\n    rand-consonant\n    rand-vowel\n  ]\n})\n\n(fn () (reply-html\n  (html-app-template\n    (html-body {}\n      (html-utility-heading $title)\n      (html-p $blurb)\n      (html-generated-words)))))",
          "make-one-word" : "(fn () (concat\n  (rand-consonant)\n  (rand-vowel)\n  (rand-consonant)\n  (rand-consonant)\n  (rand-vowel)\n  (rand-consonant)\n))",
          "rand-consonant" : "(fn () (ith $consonants (int (rand 21))))",
-         "rand-vowel" : "(fn () (ith $vowels (int (rand  5))))"
+         "rand-vowel" : "(fn () (ith $vowels (int (rand  5))))",
+         "stats" : {
+            "en-letter-stats" : "# English letter frequencies from\n#  http://www.math.cornell.edu/~mec/2003-2004/cryptography/subs/frequencies.html\n{\n  consonants {\n    T [ 16587 9.100000 ]\n    N [ 12666 6.950000 ]\n    S [ 11450 6.280000 ]\n    R [ 10977 6.020000 ]\n    H [ 10795 5.920000 ]\n    D [ 7874 4.320000 ]\n    L [ 7253 3.980000 ]\n    C [ 4943 2.710000 ]\n    M [ 4761 2.610000 ]\n    F [ 4200 2.300000 ]\n    Y [ 3853 2.110000 ]\n    W [ 3819 2.090000 ]\n    G [ 3693 2.030000 ]\n    P [ 3316 1.820000 ]\n    B [ 2715 1.490000 ]\n    V [ 2019 1.110000 ]\n    K [ 1257 0.690000 ]\n    X [ 315 0.170000 ]\n    Q [ 205 0.110000 ]\n    J [ 188 0.100000 ]\n    Z [ 128 0.070000 ]\n  }\n  vowels {\n    E [ 21912 12.020000 ]\n    A [ 14810 8.120000 ]\n    O [ 14003 7.680000 ]\n    I [ 13318 7.310000 ]\n    U [ 5246 2.880000 ]\n  }\n}"
+         }
+      },
+      "120-random-guids" : {
+         "README" : "Want some random guids?",
+         "main" : "// one line:\n// (fn () (reply-text (join '\\n' (map-list rand-guid (.. 1 30)))))\n\n// stacked up:\n(fn ()\n  (reply-text\n    (join '\\n'\n      (map-list rand-guid\n        (.. 1 30)))))"
       }
    }
 }
