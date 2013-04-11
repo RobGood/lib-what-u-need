@@ -1,0 +1,14 @@
+{
+   "README" : "This class generates (very basic) RSS v2.0 XML",
+   "_dateCreated" : "Sat Apr 28 00:53:41 2012",
+   "_useCount" : 124,
+   "api" : {
+      "add-item" : "(fn (url date title description comment --\n      rss-doc rss-channel rss-item rss-url rss-title rss-desc)\n\n  (= (hash-get $self / per-item))\n\n  // De-dup...\n  (= seen-key (join '\\n' [$url $date $title $description]))\n  (if (defined? (hash-get $seen-items / $seen-key))\n    (return))\n\n  (hash-set $seen-items / $seen-key 1)\n\n  (= rss-item  ($rss-doc createElement item))\n\n  (rss-populate $rss-item {\n    link        $url\n    pubDate     $date\n    title       $title\n    description $description\n  })\n\n  (if (defined? $comment)\n    ($rss-item  addChild ($rss-doc createCDATASection $comment)))\n\n  ($rss-channel addChild $rss-item)\n)",
+      "rss-elem" : "(fn (name text -- elem)\n  (if (undef? $text) (= text ''))\n\n  (= elem ($rss-doc createElement $name))\n  ($elem addChild ($rss-doc createTextNode $text))\n  $elem)",
+      "rss-populate" : "(fn (item info)\n  (map-list (fn (_) ($item addChild (rss-elem $_ (hash-get $info / $_))))\n    (hash-keys $info /)))",
+      "to-string" : "(fn (arg)\n  (= (hash-get $self / per-item))\n  ($rss-doc toString $arg))"
+   },
+   "new" : "(fn (title -- rss-doc)\n  (if (undef? $title) (= title '*** TITLE ***'))\n\n  (= rss-doc (pm-call (pm-new XML::LibXML) createDocument '1.0' UTF-8))\n\n  (= rss-rss     (pm-call $rss-doc createElement rss))\n  (= rss-channel (pm-call $rss-doc createElement channel))\n  (= rss-title   (pm-call $rss-doc createElement title))\n  (= title-node  (pm-call $rss-doc createTextNode $title))\n\n  ($rss-rss     setAttribute   version '2.0')\n  ($rss-doc     setDocumentElement  $rss-rss)\n\n  ($rss-rss     addChild $rss-channel)\n  ($rss-channel addChild $rss-title)\n  ($rss-title   addChild $title-node)\n\n  (= seen-items {})\n  (hash-set $self / per-item  $[rss-doc rss-channel seen-items])\n)",
+   "on-load" : "(fn ()\n  (def-hash-fn $self {\n    /api [\n      to-string\n      add-item\n      rss-elem\n      rss-populate\n    ]\n  })\n)",
+   "rcs-id" : "$Id: rss,v 1.125 2012/08/15 18:17:44 apache Exp apache $"
+}

@@ -1,0 +1,9 @@
+{
+   "_dateCreated" : "Thu Dec 16 01:14:04 2010",
+   "_useCount" : 28,
+   "fetch-show" : "(fn (url)\n  (print \" ** url: $url\\n\")\n  (print (desc-to-string (desc-from-string (deref-url $url))))\n  (print '\\n'))",
+   "main" : "(fn ()\n\n(= urls (list\nhttp://mtgox.com/code/data/ticker.php\nhttp://mtgox.com/code/data/getDepth.php\nhttp://mtgox.com/code/data/getTrades.php\n))\n\n\n(ct)(bl)\n\n(def-fn fetch-show (url)\n  (print \" ** url: $url\\n\")\n  (print (desc-to-string (desc-from-string (deref-url $url))))\n  (print '\\n'))\n\n(map-list fetch-show $urls)\n\n)",
+   "on-load" : "(fn ()\n  (def-hash-fn $self / main)\n)",
+   "rcs-id" : "$Id: mtgox,v 1.29 2010/12/23 05:01:36 apache Exp apache $",
+   "urls" : "(list\n  http://mtgox.com/code/data/ticker.php\n  http://mtgox.com/code/data/getDepth.php\n  http://mtgox.com/code/data/getTrades.php\n)"
+}

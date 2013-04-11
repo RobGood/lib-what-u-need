@@ -1,0 +1,6 @@
+{
+   "_dateCreated" : "Thu Sep 29 12:21:38 2011",
+   "_useCount" : 3,
+   "main" : "(fn ()\n  (ct)(bl)\n  (emit (rand-guid)))",
+   "rcs-id" : "$Id: rand-guid,v 1.4 2011/09/29 16:22:10 apache Exp apache $"
+}

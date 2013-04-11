@@ -1,0 +1,34 @@
+{
+   "00" : "This demos StrongAPI usage.",
+   "_dateCreated" : "Thu Aug 25 15:38:56 2011",
+   "_useCount" : 27,
+   "api-entry-points" : "(hash\n  GET/                        1\n  GET/demo                    1\n  GET/demo/~term-1~           1\n  GET/demo/~term-1~/~term-2~  1\n)",
+   "api-handlers" : {
+      "1" : "1"
+   },
+   "main" : "(fn ()\n  (if (|| (undef? $req-term-1) (undef? $req-term-2))\n    (return (usage)))\n\n  (report \"terms: '%s', '%s'\" $req-term-1 $req-term-2)\n\n  (= req (hash\n    vertex (list $req-term-1 $req-term-2)\n    apikey xwz6y36dbp\n  ))\n\n  (= url (sprintf 'http://request.strongapi.com/?request=%s'\n    (urlencode (desc-to-string $req))))\n\n  (= resp (catch (deref-url $url) \"{\\\"_err\\\": $_err}\"))\n\n  (ct application/json)(bl)\n  (emit $resp)\n)",
+   "on-load" : "(fn ()\n  (desc-read _ HTML-macros)\n  (def-hash-fn $self / usage)\n)",
+   "rcs-id" : "$Id: demo-StrongAPI,v 1.31 2011/08/25 19:58:14 apache Exp apache $",
+   "request-from-client" : {
+      "schema" : {
+         "HTTP" : {
+            "GET" : {
+               ".on-match." : "(hash-eval $self /api-handlers 1)",
+               "demo" : {
+                  ".on-match." : "(hash-eval $self /api-handlers 1)",
+                  "~term-1~" : {
+                     ".on-match." : "(hash-eval $self /api-handlers 1)",
+                     "~term-2~" : {
+                        ".on-match." : "(hash-eval $self /api-handlers 1)"
+                     }
+                  }
+               },
+               "sys" : {
+                  ".on-match." : "(hash-eval $self /api-handlers 1)"
+               }
+            }
+         }
+      }
+   },
+   "usage" : "(fn ()\n  (ct text/html)(bl)\n\n(emit (html-html\n  (html-head\n    (html-title \"Demo -- $target-desc\"))\n\n  (html-body ()\n    (html-h 4 'Two terms need to be specified in the URL')\n    (html-link (sprintf 'http://%s/api/dplx/%s/demo/TERM1/TERM2\\n'\n     (hash-get (http-headers) / Host) $target-desc))\n  )\n))\n)"
+}

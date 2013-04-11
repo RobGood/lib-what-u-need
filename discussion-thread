@@ -1,0 +1,103 @@
+{
+   "Notes" : {
+      "README" : "Comment thread\n\nmap path-info space to a tree of discussion threads.\n  a request's path-info is interpreted as the thread id.\n\nagents interact with the thread in a number of ways:\n  - create new threads by POSTing content to an unused thread id.  (how to get one?)\n  - retrieve content from a given thread by its id.\n  - POST a reply to the original POST, or another reply.\n  - edit agent's own content within a thread.\n  - [admin] edit content of a thread.\n\na thread starts/is created with an inital post.\n  POST JSON request in an application-specific schema.\n  agent starting the thread 'owns' the thread,\n  responses to the thread from the owner are distinguished somehow.\n\nresponses (to responses)* to the original post form a tree within the thread.\n\nlog POST request payloads[1] against path-info, i.e. thread 'id',\n  [1] and timestamp, request-addr,\n      user-agent, session-id, http-headers\n\nreply to GET with path-info identified thread tree (original post and its replies)\n  finer grained responses can be implemented later.\n\nThe JSON POSTings are managed as opaque data.\nThe content of the POSTing is application-specific."
+   },
+   "_dateCreated" : "Sat Mar 10 14:17:56 2012",
+   "_useCount" : 251,
+   "api" : {
+      "get-dbm-name" : "(fn (app-id) (sprintf %s-%s-log $self/name $app-id))",
+      "handle-request" : "(fn (app-id th-id -- dbm-name dbm)\n  (= dbm-name (get-dbm-name $app-id))\n  (atomic ,$dbm-name {}\n    (= dbm (dbm-open $dbm-name {mode rw}))\n    (= th-content (desc-from-string (hash-get $dbm / $th-id)))\n    (if\n      (eq GET  $request-method) ( fetch-posting (hash-get $query-hash / msg-id))\n      (eq POST $request-method) (append-posting (hash-get $query-hash / reply-to))\n      (throw (sprintf 'Unimplemented request method %s' $request-method)))\n    (dbm-close $dbm-name)\n    $th-content))",
+      "lookup-paths-in-thread" : "(fn (app-id th-id -- dbm dbm-name th-content path-list)\n  (= dbm-name (get-dbm-name $app-id))\n  (atomic ,$dbm-name {}\n    (= dbm (dbm-open $dbm-name {mode r}))\n    (= th-content (desc-from-string (hash-get $dbm / $th-id)))\n    (dbm-close $dbm-name))\n\n  (= path-list [])\n  (report 'TODO: walk th-content collecting paths...')\n  $path-list\n)",
+      "lookup-post-by-path" : "(fn (path -- node meta)\n  (= meta (hash-get $th-content / meta))\n  (= node (hash-get $th-content / posts))\n  (if (defined? $path) (do\n    (= path0 $path)\n    (= path (split '\\\\.' $path))\n    (while (&& (defined? $node) (list-len $path))\n      (= node (hash-get (ith $node (shift $path)) / posts)))\n  ))\n  {meta $meta path $path0 posts $node}\n)",
+      "lookup-threads" : "(fn (app-id)\n  (= dbm-name (get-dbm-name $app-id))\n  (atomic ,$dbm-name {}\n    (= dbm (dbm-open $dbm-name {mode rw}))\n    (= th-list (hash-keys $dbm /))\n    (dbm-close $dbm-name)\n    $th-list))",
+      "mk-msg-meta" : "(fn (key) {\n  ts {\n    date  (date)\n    time  (time)\n  }\n\n  reply-to $reply-to\n\n  (concat $key -owner) {\n    headers     (http-headers)\n    remote-addr $remote-addr\n    session-id  $session-id\n  }\n})",
+      "mk-new-thread" : "(fn (msg) {\n  meta   (mk-msg-meta thread)\n  posts  [$msg]\n})",
+      "reply-to-msg-in-thread" : "(fn (msg reply-to -- posts)\n  (if (undef? (= posts (lookup-post-by-path $reply-to)))\n    (throw (sprintf 'No such message \\'%s\\' in thread \\'%s\\' to reply to.'\n              $reply-to $th-id)))\n\n  (= posts (hash-get $posts / posts))\n\n  (push $posts $msg)\n  (= i (- (list-len $posts) 1))\n  (hash-set $msg / path\n    (if (defined? $reply-to)\n      \"$reply-to.$i\"\n      $i)))"
+   },
+   "api-entry-points" : "{\n  GET/                         usage\n\n  GET/~app-id~/thread/~th-id*  1\n POST/~app-id~/thread/~th-id* 1\n\n  GET/~app-id~/threads         list-all-threads\n  GET/~app-id~/paths/~th-id*   list-thread-paths\n}",
+   "api-handlers" : {
+      "1" : "1",
+      "list-all-threads" : "(reply-json (sort-alpha (lookup-threads $req-app-id)))",
+      "list-thread-paths" : "(reply-json (lookup-paths-in-thread $req-app-id $req-th-id))",
+      "posting" : "(reply-json (handle-request $req-app-id $req-th-id))",
+      "usage" : "(reply-usage)"
+   },
+   "api-posting" : {
+      "append-posting" : "(fn (reply-to -- payload msg posts)\n  (= payload (desc-from-string $request-content))\n\n  (= msg {\n    meta (mk-msg-meta msg)\n    posts  [$payload]\n  })\n\n  (if (undef? $th-content)\n    (= th-content (mk-new-thread $msg))\n    (reply-to-msg-in-thread $msg $reply-to))\n\n  (hash-set $dbm / $th-id (desc-to-string $th-content))\n  ())",
+      "fetch-posting" : "(fn (msg-id) (= th-content (lookup-post-by-path $msg-id)))",
+      "test-posting" : "// dpl -eval '(desc-read self discussion-thread) (test-posting Bugz32)'\n\n(fn (th-id reply-to -- url)\n (= url (sprintf http://localhost/api/dplx/%s/%s $self/name dt-Testing))\n (if (defined? $th-id) (do\n    (= url (sprintf %s/thread/%s $url $th-id))\n    (if (defined? $reply-to) (do\n      (= url (sprintf %s?reply-to=%s $url $reply-to))\n    ))\n ))\n\n (report 'url: %s' $url)\n (emit (desc-to-string (catch\n  (deref-url $url\n    {\n      verbose 1\n      method  POST\n      headers {\n        Content-Type application/json\n      }\n      body {\n        /** application-specific arbitrary content here... **/\n        title 'This is a test post'\n        id    (rand-guid)\n        body  (join ' ' (map-list rand-word (.. 1 12)))\n      }\n    })\n  {err $_err}\n ))))"
+   },
+   "main" : "(fn () (reply-json (handle-request $req-app-id $req-th-id)))",
+   "on-load" : "(fn ()\n  (def-hash-fn $self / reply-usage)\n\n  (def-hash-fn $self /api-posting append-posting)\n  (def-hash-fn $self /api-posting fetch-posting)\n  (def-hash-fn $self /api-posting test-posting)\n\n  (def-hash-fn $self /api lookup-paths-in-thread)\n  (def-hash-fn $self /api lookup-threads)\n\n  (def-hash-fn $self /api handle-request)\n  (def-hash-fn $self /api get-dbm-name)\n  (def-hash-fn $self /api mk-msg-meta)\n  (def-hash-fn $self /api mk-new-thread)\n  (def-hash-fn $self /api lookup-post-by-path)\n  (def-hash-fn $self /api reply-to-msg-in-thread)\n)",
+   "rcs-id" : "$Id: discussion-thread,v 1.262 2012/03/13 20:05:22 apache Exp apache $",
+   "reply-usage" : "(fn ()\n  (reply-text 'no usage yet...')\n)",
+   "request-from-client" : {
+      "schema" : {
+         "HTTP" : {
+            "GET" : {
+               ".on-match." : "(hash-eval $self /api-handlers 1)",
+               "paths" : {
+                  "~app-id~" : {
+                     "~th-id*" : {
+                        ".on-match." : "(hash-eval $self /api-handlers list-thread-paths)"
+                     }
+                  },
+                  "~th-id*" : {
+                     ".on-match." : "(hash-eval $self /api-handlers list-thread-paths)"
+                  }
+               },
+               "thread" : {
+                  "~app-id~" : {
+                     "~th-id*" : {
+                        ".on-match." : "(hash-eval $self /api-handlers 1)"
+                     }
+                  },
+                  "~th-id*" : {
+                     ".on-match." : "(hash-eval $self /api-handlers 1)"
+                  }
+               },
+               "threads" : {
+                  ".on-match." : "(hash-eval $self /api-handlers list-all-threads)",
+                  "~app-id~" : {
+                     ".on-match." : "(hash-eval $self /api-handlers list-all-threads)"
+                  }
+               },
+               "~app-id~" : {
+                  "paths" : {
+                     "~th-id*" : {
+                        ".on-match." : "(hash-eval $self /api-handlers list-thread-paths)"
+                     }
+                  },
+                  "thread" : {
+                     "~th-id*" : {
+                        ".on-match." : "(hash-eval $self /api-handlers 1)"
+                     }
+                  },
+                  "threads" : {
+                     ".on-match." : "(hash-eval $self /api-handlers list-all-threads)"
+                  }
+               }
+            },
+            "POST" : {
+               "thread" : {
+                  "~app-id~" : {
+                     "~th-id*" : {
+                        ".on-match." : "(hash-eval $self /api-handlers 1)"
+                     }
+                  },
+                  "~th-id*" : {
+                     ".on-match." : "(hash-eval $self /api-handlers 1)"
+                  }
+               },
+               "~app-id~" : {
+                  "thread" : {
+                     "~th-id*" : {
+                        ".on-match." : "(hash-eval $self /api-handlers 1)"
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+}

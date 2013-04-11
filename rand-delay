@@ -1,0 +1,10 @@
+{
+   "_dateCreated" : "Tue May 24 11:39:21 2011",
+   "_useCount" : 92,
+   "cmdline" : "DPL: dpl -eval '(desc-read self rand-delay) (emit (desc-to-string (test     100)))'\nDFN: dpl -eval '(desc-read self rand-delay) (emit (desc-to-string (test-dfn 100)))'\n\ntested between srvdevlnx01 and srvdevlnx04 with 2000 connections (and NO feed engines running!)",
+   "main" : "(fn ()\n  (= t0 (time))\n  (sleep (rand 10))\n  (= delay (- (time) $t0))\n\n  (ct)(bl)\n  (printf 'date: %s\\ndelay: %s\\n' (date) $delay)\n)",
+   "on-load" : "(fn ()\n  (def-hash-fn $self / test)\n  (def-hash-fn $self / test-dfn)\n)",
+   "rcs-id" : "$Id: rand-delay,v 1.93 2011/05/25 04:44:38 apache Exp apache $",
+   "test" : "(fn (upper)\n  // See equivalent DFN in dfn-test-000/dfn/async-deref-url\n\n  (= url-list   (map-list (fn (_) http://srvdevlnx04/api/dplx/rand-delay) (.. 1 $upper)))\n\n  (= async-list (map-list async-deref-url $url-list))\n\n  (while (= ready-list (async-select $async-list))\n      (map-list async-read $ready-list))\n\n  (map-list async-end $async-list)\n)",
+   "test-dfn" : "(fn (upper)\n  // See equivalent DFN in dfn-test-000/dfn/async-deref-url\n  // Run the test and return result from test namespace.\n  (desc-read self dfn-test-000)\n  (def-hash-fn $self / run)\n\n  (run test-2011-05-24-000 async-deref-url $upper)\n  (namespace dfn-engine:test-2011-05-24-000:async-deref-url () $result)\n)"
+}
