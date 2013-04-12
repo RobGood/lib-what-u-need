@@ -1,7 +1,7 @@
 {
    "README" : "This app renders the site's top level page\n\nIt also renders pages for any utility found under\n/utilities which has a 'main' function.",
    "_dateCreated" : "Mon Apr  8 16:24:40 2013",
-   "_useCount" : 310,
+   "_useCount" : 328,
    "api-entry-points" : "// The names on the left represent request patterns that will be accepted.\n// The names on the right refer to the corresponding request handler named in /api-handler.\n\n{\n  GET/                      show-top-page\n  GET/utilities/~util-path* run-utility\n}",
    "api-handlers" : {
       "run-utility" : "(= path (join / ['' utilities @$req-util-path]))\n(def-hash-fn $self $path main)\n(if (fn? $main) (return (main)))\n\n(reply-html (html-app-template\n  (html-page-error \"Nothing found for $path\")))",
@@ -10,7 +10,7 @@
    "html" : {
       "README" : "HTML rendering code",
       "html-controls" : "(def-fn edit-view-control-label (tail)\n  (=? tail '')\n  (concat (if (defined? $userid) edit view) \"$tail source\"))\n\n(def-fn html-controls-one (url label)\n  (if (defined? $url)\n    (html-a {href $url} $label)\n    $label))\n\n(fn () [\n  (html-controls-one (self-url e) (edit-view-control-label))\n])",
-      "html-one-utility" : "(fn (path -- rm-text title label)\n  (report ' >> (%s %s)' $. $path)\n\n  (= path    \"/utilities$path\")\n  (= rm-text (split '\\n' (hash-get $self $path README)))\n  (= title   (shift $rm-text))\n  (= label   (if (defined? $userid) Edit View))\n\n  [\n    <tr><td>\n      '<table width=\"100%\">'\n      <tr>\n      '<td align=\"left\">' (html-b $title) </td>\n      '<td align=\"right\" width=\"15%\">'\n          (bracket-link (html-a {href (self-url e $path)} \"<b>${label}</b>\"))\n          (bracket-link (html-a {href (self-url x $path)} '<b>Run</b>'))\n      </td>\n      </tr>\n      </table>\n    $rm-text\n    </td><td>\n      Something goes here maybe, stats, usage info, related links, chat ...\n    </td></tr>\n  ])",
+      "html-one-utility" : "(fn (path -- rm-text title label)\n  (report ' >> (%s %s)' $. $path)\n\n  (= path    \"/utilities$path\")\n  (= rm-text (split '\\n' (hash-get $self $path README)))\n  (= title   (shift $rm-text))\n  (= label   (if (defined? $userid) Edit View))\n\n  [\n    <tr><td>\n      '<table width=\"100%\">'\n      <tr>\n      '<td align=\"left\">' (html-b $title) </td>\n      '<td align=\"right\" width=\"15%\">'\n          (bracket-link (html-a {href (self-url e $path)} \"<b>${label}</b>\"))\n          (bracket-link (html-a {href (self-url x $path)} '<b>Run</b>'))\n      </td>\n      </tr>\n      </table>\n    $rm-text\n    </td></tr>\n  ])",
       "html-utility-heading" : "(def-fn html-utility-heading--no-link (text)\n  (html-utility-heading $text (true)))\n\n(fn (text supress-link? -- url log-in-out)\n  (= url (if (! $supress-link?) (self-url x $path)))\n  (= log-in-out (if (defined? $userid) logout login))\n\n[\n  '<table width=\"100%\">' <tr>\n  <td>\n    (html-h 2 (html-controls-one $url $text))\n  </td>\n  '<td valign=\"top\" align=\"right\">'\n    (if (defined? $userid) \" $userid ($workspace-name)\")\n    (bracket-link (html-a {href \"/api/dplx/user/$log-in-out\"}   $log-in-out))\n    (bracket-link (html-a {href (self-url x)}                  'back to top page'))\n    (bracket-link (html-a {href (self-url e $path)}            (edit-view-control-label)))\n   </td>\n  </tr></table>\n])",
       "pages" : {
          "README" : "top level rendering functions, one per page",
@@ -23,8 +23,8 @@
       "get-utilities-to-show" : "(def-fn path-has-a-main? (path)\n  (defined? (hash-get $utils $path main)))\n\n(fn ( -- utils)\n  (= utils (hash-get $self / utilities))\n  (sort-alpha\n    (grep path-has-a-main?\n      (hash-paths $utils))))",
       "self-url" : "(fn (action path workspace)\n  (=? path '')\n  (=? workspace /lib-what-u-need)\n\n  (= workspace\n    (if (defined? $workspace)\n      \"?_workspaceName=$workspace\" ''))\n\n  (sprintf /api/dpl%s/%s%s%s\n    $action\n    $self/name\n    $path\n    $workspace\n  ))"
    },
-   "on-load" : "(fn ()\n  (= app-title 'What U Need')\n\n  (desc-read _ HTML-macros)\n\n  (def-hash-fn $self {\n    /html/pages [\n      html-page-error\n      html-page-top\n    ]\n\n    /html [\n      html-utility-heading\n      html-one-utility\n      html-controls\n    ]\n\n    /misc [\n      self-url\n      get-utilities-to-show\n    ]\n  })\n)",
-   "rcs-id" : "$Id: top-page,v 1.308 2013/04/11 02:00:50 apache Exp rcgood $",
+   "on-load" : "(fn ()\n  (= app-title 'What U Need')\n\n  (desc-read _ HTML-macros)\n\n  // Define the functions whose code is located as specified.\n  (def-hash-fn $self {\n    /html/pages [\n      html-page-error\n      html-page-top\n    ]\n\n    /html [\n      html-utility-heading\n      html-one-utility\n      html-controls\n    ]\n\n    /misc [\n      self-url\n      get-utilities-to-show\n    ]\n  })\n)",
+   "rcs-id" : "$Id: top-page,v 1.323 2013/04/12 05:21:59 apache Exp apache $",
    "request-from-client" : {
       "schema" : {
          "HTTP" : {
@@ -40,11 +40,11 @@
       }
    },
    "utilities" : {
-      "100-demo" : {
+      "100-rand-word-pair" : {
          "README" : "A brainstorming utility that present sets of random word pairs\n\nLater iterations will build on this.",
          "main" : "(= title 'random word pair brainstorming I')\n(= blurb 'have a look at these pairs and see if any jump out at you.')\n\n(fn () (reply-html\n  (html-app-template\n    (html-body {}\n      (html-utility-heading $title)\n      (html-p $blurb)\n      <table>\n      (foreach i (.. 1 8) [\n        <tr>\n        (foreach j (.. 1 8) [\n          <td>\n          (sprintf '%s %s' (rand-word) (rand-word))\n          </td>\n        ])\n        </tr>\n      ])\n      </table>\n    )\n  )\n))"
       },
-      "101-demo" : {
+      "101-rand-word-pair--pick-fav" : {
          "README" : "A brainstorming utility that present sets of random word pairs, and lets you pick favourites\n\nThis will make the pairs into links which when clicked will add\nthat pair to the others on the page.",
          "check-for-favorite-pairs" : "(fn ( -- fav-pair)\n  (dbm-atomic rand-word-pair-fav-pair {mode rw}\n    (=  fav-pairs (desc-from-string (hash-get $dbm / fav-pairs     )))\n    (=? fav-pairs (desc-from-string (hash-set $dbm / fav-pairs '[]')))\n    (if (defined? (= fav-pair (hash-get $query-hash / fav-pair))) (do\n      (unshift $fav-pairs $fav-pair)\n      (hash-set $dbm / fav-pairs (desc-to-string $fav-pairs))))))",
          "html-fav-pairs" : "(fn ( -- columns n-columns n-items n-items-per-column) \n  (= n-columns 7)\n  (= n-items (list-len $fav-pairs))\n  (= n-items-per-column (+ \n                          (int (/ $n-items $n-columns))\n                          (if (% $n-items $n-columns) 1 0)))\n\n  (= columns\n    (foreach c (.. 1 $n-columns)\n      (foreach r (.. 1 $n-items-per-column)\n         (shift $fav-pairs))))\n\n[\n  (html-h 3 'favorite pairs')\n  <table>\n  (foreach r (.. 0 (- $n-items-per-column 1)) [\n    <tr>\n    (foreach c (.. 0 (- $n-columns 1)) [\n      <td>\n        (ith (ith $columns $c) $r)\n      </td>\n    ])\n    </tr>\n  ])\n  </table>\n])",
@@ -52,7 +52,7 @@
          "html-table-rand-word-pairs" : "(fn (max-i max-j)\n  (=? max-i 8)\n  (=? max-j 8)\n\n[\n  (html-h 3 'random pairs')\n  <table>\n  (foreach i (.. 1 $max-i) [\n    <tr>\n    (foreach j (.. 1 $max-j) [\n      <td>\n      (html-rand-word-pair)\n      </td>\n    ])\n    </tr>\n  ])\n  </table>\n])",
          "main" : "(= title 'random word pair brainstorming II')\n(= blurb '\nHave a look at these pairs and see if any jump out at you.\nClick on one to add it to the favorites.\n')\n\n(def-hash-fn $self {\n  . [\n    check-for-favorite-pairs\n    html-rand-word-pair\n    html-fav-pairs\n    html-table-rand-word-pairs\n  ]\n})\n\n\n(fn ( -- fav-pairs)\n (check-for-favorite-pairs)\n\n (reply-html\n  (html-app-template\n    (html-body {}\n      (html-utility-heading $title)\n      (html-p $blurb)\n      (html-table-rand-word-pairs)\n      (html-fav-pairs)))))"
       },
-      "110-demo" : {
+      "110-word-generator" : {
          "README" : "A pattern based word generator.",
          "html-generated-words" : "(fn ( -- words)\n  (= words\n    (sort-alpha\n      (map-list make-one-word\n        (.. 1 $n-words))))\n  \n[\n  <table>\n  (foreach i (.. 0 15) [\n    <tr>\n    (foreach j (.. 0 15) [\n      <td> (ith $words (+ (* $j 16) $i)) </td>\n    ])\n    </tr>\n  ])\n  </table>\n])",
          "main" : "(= title 'random name/word generator')\n(= blurb '\nPick out some made up names/words you like.\nThe pattern is consonant-vowel-consonant-consonant-vowel-consonant.\n')\n\n(= consonants (split '' bcdfghjklmnpqrstvwxyz))\n(= vowels     (split '' aeiou))\n(= n-words    (* 16 16))\n\n(def-hash-fn $self {\n  . [\n    html-generated-words\n    make-one-word\n    rand-consonant\n    rand-vowel\n  ]\n})\n\n(fn () (reply-html\n  (html-app-template\n    (html-body {}\n      (html-utility-heading $title)\n      (html-p $blurb)\n      (html-generated-words)))))",
@@ -66,6 +66,22 @@
       "120-random-guids" : {
          "README" : "Want some random guids?",
          "main" : "// one line:\n// (fn () (reply-text (join '\\n' (map-list rand-guid (.. 1 30)))))\n\n// stacked up:\n(fn ()\n  (reply-text\n    (join '\\n'\n      (map-list rand-guid\n        (.. 1 30)))))"
+      },
+      "130-chat" : {
+         "README" : "User chat",
+         "main" : "(fn () (reply-text 'not implemented yet.'))"
+      },
+      "131-discussion-thread" : {
+         "README" : "Discussion threads",
+         "main" : "(fn () (reply-text 'not implemented yet.'))"
+      },
+      "200-primal" : {
+         "README" : "Using Primal's data service",
+         "main" : "(fn () (reply-text 'not implemented yet'))"
+      },
+      "999-about" : {
+         "README" : "About this site",
+         "main" : "(fn () (reply-text 'not implemented yet'))"
       }
    }
 }
