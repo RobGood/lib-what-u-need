@@ -25,7 +25,7 @@
       "self-url" : "(fn (action path workspace)\n  (=? path '')\n  (=? workspace /lib-what-u-need)\n\n  (= workspace\n    (if (defined? $workspace)\n      \"?_workspaceName=$workspace\" ''))\n\n  (sprintf /api/dpl%s/%s%s%s\n    $action\n    $self/name\n    $path\n    $workspace\n  ))"
    },
    "on-load" : "(fn ()\n  (= app-title 'What U Need')\n\n  (desc-read _ HTML-macros)\n\n  // Define the functions whose code is located as specified.\n  (def-hash-fn $self {\n    /html/pages [\n      html-page-error\n      html-page-top\n    ]\n\n    /html [\n      html-utility-heading\n      html-one-utility\n      html-controls\n    ]\n\n    /misc [\n      self-url\n      get-utilities-to-show\n    ]\n  })\n)",
-   "rcs-id" : "$Id: top-page,v 1.348 2013/04/14 19:26:18 apache Exp apache $",
+   "rcs-id" : "$Id: top-page,v 1.349 2013/04/15 04:19:55 apache Exp apache $",
    "request-from-client" : {
       "schema" : {
          "HTTP" : {

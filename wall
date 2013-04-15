@@ -1,31 +1,18 @@
 {
    "README" : "Write to All",
    "_dateCreated" : "Sat Apr 13 16:16:21 2013",
-   "_useCount" : 63,
+   "_useCount" : 137,
    "api" : {
-      "add-new-item" : "(fn (item -- name msg-log items)\n  (= item (trim $item))\n  (= item {\n    time (time)\n    @$[item userid workspace-name remote-addr]\n  })\n\n  (= name wall-msg-log)\n  (atomic ,$name\n    (desc-read msg-log $name)\n    (=  items (hash-get $msg-log / items   ))\n    (=? items (hash-set $msg-log / items []))\n    (unshift $items $item)\n    (desc-write $msg-log $name)))"
-   },
-   "api-entry-points" : "{\n  GET/     usage\n  POST/    usage\n}",
-   "api-handlers" : {
-      "usage" : "(= $query-hash)\n\n(if (defined? $new-item) (add-new-item $new-item))\n\n(reply-html (html-app-template\n  (html-h 2 $app-title)\n  (html-form-new-entry)\n  (html-previous-entries)\n  (bracket-link (html-link /api/dple/wall 'edit app source'))\n))"
+      "add-new-item" : "(fn (item -- name msg-log items)\n  (if (eq '#!dpl\\r\\n' (substr $item 0 7))\n    (= item (eval $item)))\n\n  (= item (trim $item))\n  (= item {\n    time (time)\n    @$[item userid workspace-name remote-addr]\n  })\n\n  (report-vars path-info path-list)\n\n  (= name (join : [wall-msg-log @$path-list]))\n  (atomic ,$name\n    (desc-read msg-log $name)\n    (=  items (hash-get $msg-log / items   ))\n    (=? items (hash-set $msg-log / items []))\n    (unshift $items $item)\n    (desc-write $msg-log $name)))",
+      "get-wall-name-list" : "(fn ( -- parts)\n  (foreach name (desc-list wall-msg-log*)\n    (= parts (split : $name))\n    (shift $parts)\n    (join / $parts)))"
    },
    "html" : {
-      "html-form-new-entry" : "(fn ()\n  (html-form POST /api/dplx/wall [\n    'Have your say here...'<br/>\n    (html-textarea text new-item 6 50 '')<br/>\n    '<input type=\"submit\" value=\"Post your message\"/>'\n  ])\n)",
-      "html-previous-entries" : "(def-fn html-one-item (item) [\n  (sprintf '%s, %s, %s'\n    (time-to-date (hash-get $item / time))\n    (hash-get $item / userid)\n    (hash-get $item / remote-addr))\n  (html-ul (hash-get $item / item))\n  <br/>\n])\n\n(fn ( -- messages msg-log)\n  (desc-read msg-log wall-msg-log)\n  (= messages (hash-get $msg-log / items))\n\n[\n  (html-h 3 (sprintf '%srevious messages' (if (== 0 (list-len $messages)) 'No p' P)))\n  (html-ul (map-list html-one-item $messages))\n])"
+      "html-form-new-entry" : "(fn ()\n  (html-form POST \"/api/dplx/wall$path-info\" [\n    (html-textarea text new-item 6 50 '')<br/>\n    '<input type=\"submit\" value=\"Post your message\"/>'\n  ])\n)",
+      "html-one-item" : "(fn (item seq2 -- user-label when)\n  (if (undef? $item) (return ''))\n\n  (=  user-label (hash-get $item / userid))\n  (=? user-label (hash-get $item / remote-addr))\n\n  (= when (time-to-date (hash-get $item / time)))\n\n[\n  <table>\n  <tr><td>(sprintf '#%d %s, %s' $seq2 $when $user-label)</td></tr>\n  <tr><td>(hash-get $item / item)</td></tr>\n  </table>\n])",
+      "html-page" : "(fn ( -- edit-view-url edit-view-label current-wall walls)\n  (= edit-view-url   /api/dple/wall?_workspaceName=/lib-what-u-need)\n  (= edit-view-label (if (defined? $userid) edit view))\n\n  (= current-wall (join / $path-list))\n  (= walls\n    (join ', '\n      (map-list (fn (_) (html-link \"/api/dplx/wall/$_\" $_))\n        // (grep (fn (_) (ne '' $_))\n          (get-wall-name-list))))//)\n\n  (html-app-template\n    (html-utility-heading $app-title 'Have your say here...')\n    <table><tr>\n    <td>(html-form-new-entry)</td>\n   '<td valign=\"top\">'\n    (html-p (if (eq '' $current-wall) '<b>Top Wall</b>' \"Wall: <b>${current-wall}</b>\"))\n    (html-p 'Other walls: ' $walls)\n    </td>\n    </tr></table>\n    (html-previous-entries)\n    (bracket-link (html-link $edit-view-url \"$edit-view-label app source\"))\n  ))",
+      "html-previous-entries" : "(fn ( -- name seq messages msg-log n-messages)\n  (= name (join : [wall-msg-log @$path-list]))\n\n  (desc-read msg-log $name)\n\n  (= messages (hash-get $msg-log / items))\n  (= n-messages (list-len $messages))\n  (= seq $n-messages)\n\n[\n  (html-h 2 (concat\n              (if (== 0 $n-messages) No $n-messages)\n              ' previous message'\n              (if (== 1 $n-messages) '' s)\n  ))\n\n  (html-table-grid $messages 4 html-one-item)\n])"
    },
-   "main" : "(fn (req)\n\n)",
-   "on-load" : "(fn ()\n  (= app-title 'Write to All')\n\n  (desc-read _ HTML-macros)\n\n  (def-hash-fn $self {\n    /api [\n      add-new-item\n    ]\n\n    /html [\n      html-form-new-entry\n      html-previous-entries\n    ]\n  })\n)",
-   "rcs-id" : "$Id: wall,v 1.66 2013/04/13 21:08:42 apache Exp apache $",
-   "request-from-client" : {
-      "schema" : {
-         "HTTP" : {
-            "GET" : {
-               ".on-match." : "(hash-eval $self /api-handlers usage)"
-            },
-            "POST" : {
-               ".on-match." : "(hash-eval $self /api-handlers usage)"
-            }
-         }
-      }
-   }
+   "main" : "(fn ()\n  (= $query-hash)\n\n  (if (defined? $new-item)\n    (add-new-item $new-item))\n\n  (reply-html (html-page)))",
+   "on-load" : "(fn ()\n  (desc-read _ HTML-macros)\n  (desc-read _ top-page)\n\n  (= app-title 'Write to All')\n\n  (def-hash-fn $self {\n    /api [\n      add-new-item\n      get-wall-name-list\n    ]\n\n    /html [\n      html-page\n      html-form-new-entry\n      html-previous-entries\n      html-one-item\n    ]\n  })\n)",
+   "rcs-id" : "$Id: wall,v 1.140 2013/04/15 06:56:45 apache Exp apache $"
 }
