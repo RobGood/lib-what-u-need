@@ -1,12 +1,13 @@
 {
    "README" : "This app renders the site's top level page\n\nIt also renders pages for any utility found under\n/utilities which has a 'main' function.",
    "_dateCreated" : "Mon Apr  8 16:24:40 2013",
-   "_useCount" : 339,
+   "_useCount" : 351,
    "api-entry-points" : "// The names on the left represent request patterns that will be accepted.\n// The names on the right refer to the corresponding request handler named in /api-handler.\n\n{\n  GET/                      show-top-page\n  GET/utilities/~util-path* run-utility\n}",
    "api-handlers" : {
       "run-utility" : "(= path (join / ['' utilities @$req-util-path]))\n(def-hash-fn $self $path main)\n(if (fn? $main) (return (main)))\n\n(reply-html (html-app-template\n  (html-page-error \"Nothing found for $path\")))",
       "show-top-page" : "(reply-html (html-app-template (html-page-top)))"
    },
+   "edit-link.html" : "<a href=\"/api/dple/wall?_workspaceName=/lib-what-u-need\">edit source</a>",
    "html" : {
       "README" : "HTML rendering code",
       "html-controls" : "(def-fn edit-view-control-label (tail)\n  (=? tail '')\n  (concat (if (defined? $userid) edit view) \"$tail source\"))\n\n(def-fn html-controls-one (url label)\n  (if (defined? $url)\n    (html-a {href $url} $label)\n    $label))\n\n(fn () [\n  (html-controls-one (self-url e) (edit-view-control-label))\n])",
@@ -14,8 +15,8 @@
       "html-utility-heading" : "(def-fn html-utility-heading--no-link (text text2)\n  (html-utility-heading $text $text2 (true)))\n\n(fn (text text2 supress-link? -- url log-in-out)\n  (= url (if (! $supress-link?) (self-url x $path)))\n  (= log-in-out (if (defined? $userid) logout login))\n\n[\n  '<table width=\"100%\">' <tr>\n  <td>\n    (html-h 2 (html-controls-one $url $text))\n    $text2\n  </td>\n  '<td valign=\"top\" align=\"right\">'\n    (if (defined? $userid) \" $userid ($workspace-name)\")\n    (bracket-link (html-a {href \"/api/dplx/user/$log-in-out\"}   $log-in-out))\n    (bracket-link (html-a {href (self-url x)}                  'back to top page'))\n    (bracket-link (html-a {href (self-url e $path)}            (edit-view-control-label)))\n   </td>\n  </tr></table>\n])",
       "pages" : {
          "README" : "top level rendering functions, one per page",
-         "html-page-error" : "(fn (text)\n  (= path ())\n[\n  (html-utility-heading $text)\n])",
-         "html-page-top" : "(fn ()\n (= heading \"<i>${app-title}</i> offers webapp utilities you need...\")\n (= tag-line '...because you\\'ve written or commisioned them.')\n\n[\n  (html-utility-heading--no-link $heading \"<b>${tag-line}</b>\")\n\n  <table>\n  (map-list html-one-utility (get-utilities-to-show))\n  </table>\n])"
+         "html-page-error" : "(fn (text)\n[\n  (html-utility-heading $text)\n])",
+         "html-page-top" : "(fn ()\n (= heading \"<i>${app-title}</i> offers webapp utilities you need...\")\n (= tag-line '...') # because you\\'ve written or commisioned them.')\n\n/*\n    (html-p 'DPL is a decentralized social computing environment; '\n      (html-ul\n         'it\\'s like a wiki, but for writing programs rather than writing documents,' <br/>\n         'it\\'s like a spreadsheet, but hierarchical rather than tabular.'\n       ))\n*/\n\n[\n  (html-utility-heading--no-link $heading \"<b>${tag-line}</b>\")\n\n  <table>\n  (map-list html-one-utility (get-utilities-to-show))\n  </table>\n])"
       }
    },
    "main" : "(fn ())",
@@ -24,7 +25,7 @@
       "self-url" : "(fn (action path workspace)\n  (=? path '')\n  (=? workspace /lib-what-u-need)\n\n  (= workspace\n    (if (defined? $workspace)\n      \"?_workspaceName=$workspace\" ''))\n\n  (sprintf /api/dpl%s/%s%s%s\n    $action\n    $self/name\n    $path\n    $workspace\n  ))"
    },
    "on-load" : "(fn ()\n  (= app-title 'What U Need')\n\n  (desc-read _ HTML-macros)\n\n  // Define the functions whose code is located as specified.\n  (def-hash-fn $self {\n    /html/pages [\n      html-page-error\n      html-page-top\n    ]\n\n    /html [\n      html-utility-heading\n      html-one-utility\n      html-controls\n    ]\n\n    /misc [\n      self-url\n      get-utilities-to-show\n    ]\n  })\n)",
-   "rcs-id" : "$Id: top-page,v 1.334 2013/04/12 06:22:33 apache Exp apache $",
+   "rcs-id" : "$Id: top-page,v 1.348 2013/04/14 19:26:18 apache Exp apache $",
    "request-from-client" : {
       "schema" : {
          "HTTP" : {
@@ -40,6 +41,10 @@
       }
    },
    "utilities" : {
+      "050-write-to-all" : {
+         "README" : "Public posting board -- Write to All",
+         "main" : "(hash-set $self / edit-link.html\n  (html-a {href /api/dple/wall?_workspaceName=/lib-what-u-need} 'edit source'))\n(desc-write $self $self/name)\n\n(fn () (redirect-to \"http://${host}/api/dplx/wall\"))"
+      },
       "100-rand-word-pair" : {
          "README" : "A brainstorming utility that present sets of random word pairs\n\nLater iterations will build on this.",
          "main" : "(= title 'random word pair brainstorming I')\n(= blurb 'have a look at these pairs and see if any jump out at you.')\n\n(fn () (reply-html\n  (html-app-template\n    (html-body {}\n      (html-utility-heading $title)\n      (html-p $blurb)\n      <table>\n      (foreach i (.. 1 8) [\n        <tr>\n        (foreach j (.. 1 8) [\n          <td>\n          (sprintf '%s %s' (rand-word) (rand-word))\n          </td>\n        ])\n        </tr>\n      ])\n      </table>\n    )\n  )\n))"

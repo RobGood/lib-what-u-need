@@ -1,0 +1,31 @@
+{
+   "README" : "Write to All",
+   "_dateCreated" : "Sat Apr 13 16:16:21 2013",
+   "_useCount" : 63,
+   "api" : {
+      "add-new-item" : "(fn (item -- name msg-log items)\n  (= item (trim $item))\n  (= item {\n    time (time)\n    @$[item userid workspace-name remote-addr]\n  })\n\n  (= name wall-msg-log)\n  (atomic ,$name\n    (desc-read msg-log $name)\n    (=  items (hash-get $msg-log / items   ))\n    (=? items (hash-set $msg-log / items []))\n    (unshift $items $item)\n    (desc-write $msg-log $name)))"
+   },
+   "api-entry-points" : "{\n  GET/     usage\n  POST/    usage\n}",
+   "api-handlers" : {
+      "usage" : "(= $query-hash)\n\n(if (defined? $new-item) (add-new-item $new-item))\n\n(reply-html (html-app-template\n  (html-h 2 $app-title)\n  (html-form-new-entry)\n  (html-previous-entries)\n  (bracket-link (html-link /api/dple/wall 'edit app source'))\n))"
+   },
+   "html" : {
+      "html-form-new-entry" : "(fn ()\n  (html-form POST /api/dplx/wall [\n    'Have your say here...'<br/>\n    (html-textarea text new-item 6 50 '')<br/>\n    '<input type=\"submit\" value=\"Post your message\"/>'\n  ])\n)",
+      "html-previous-entries" : "(def-fn html-one-item (item) [\n  (sprintf '%s, %s, %s'\n    (time-to-date (hash-get $item / time))\n    (hash-get $item / userid)\n    (hash-get $item / remote-addr))\n  (html-ul (hash-get $item / item))\n  <br/>\n])\n\n(fn ( -- messages msg-log)\n  (desc-read msg-log wall-msg-log)\n  (= messages (hash-get $msg-log / items))\n\n[\n  (html-h 3 (sprintf '%srevious messages' (if (== 0 (list-len $messages)) 'No p' P)))\n  (html-ul (map-list html-one-item $messages))\n])"
+   },
+   "main" : "(fn (req)\n\n)",
+   "on-load" : "(fn ()\n  (= app-title 'Write to All')\n\n  (desc-read _ HTML-macros)\n\n  (def-hash-fn $self {\n    /api [\n      add-new-item\n    ]\n\n    /html [\n      html-form-new-entry\n      html-previous-entries\n    ]\n  })\n)",
+   "rcs-id" : "$Id: wall,v 1.66 2013/04/13 21:08:42 apache Exp apache $",
+   "request-from-client" : {
+      "schema" : {
+         "HTTP" : {
+            "GET" : {
+               ".on-match." : "(hash-eval $self /api-handlers usage)"
+            },
+            "POST" : {
+               ".on-match." : "(hash-eval $self /api-handlers usage)"
+            }
+         }
+      }
+   }
+}
