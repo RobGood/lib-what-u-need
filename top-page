@@ -1,7 +1,7 @@
 {
    "README" : "This app renders the site's top level page\n\nIt also renders pages for any utility found under\n/utilities which has a 'main' function.",
    "_dateCreated" : "Mon Apr  8 16:24:40 2013",
-   "_useCount" : 359,
+   "_useCount" : 367,
    "api-entry-points" : "// The names on the left represent request patterns that will be accepted.\n// The names on the right refer to the corresponding request handler named in /api-handler.\n\n{\n  GET/                      show-top-page\n  GET/utilities/~util-path* run-utility\n}",
    "api-handlers" : {
       "run-utility" : "(= path (join / ['' utilities @$req-util-path]))\n(def-hash-fn $self $path main)\n(if (fn? $main) (return (main)))\n\n(reply-html (html-app-template\n  (html-page-error \"Nothing found for $path\")))",
@@ -15,7 +15,7 @@
       "pages" : {
          "README" : "top level rendering functions, one per page",
          "html-page-error" : "(fn (text)\n[\n  (html-utility-heading $text)\n])",
-         "html-page-top" : "(fn ()\n (= heading \"<i>${app-title}</i> offers webapp utilities you need...\")\n (= tag-line '...') # because you\\'ve written or commisioned them.')\n\n (= tag-line\n   (html-p 'a decentralized social computing environment; '\n     (html-ul\n        'it\\'s like a wiki, but for writing programs rather than writing documents,' <br/>\n        'it\\'s like a spreadsheet, but hierarchical rather than tabular.' <br/>\n        ...\n      ))\n  )\n\n[\n  (html-utility-heading--no-link $heading \"<b>${tag-line}</b>\")\n\n  <table>\n  (map-list html-one-utility (get-utilities-to-show))\n  </table>\n])"
+         "html-page-top" : "(fn ()\n (= heading \"<i>${app-title}</i> : webapp utilities you need ...\")\n (= tag-line\n   (html-p 'a decentralized social computing environment; '\n     (html-ul\n        'it\\'s like a wiki, but for writing webapps rather than writing documents,' <br/>\n        'it\\'s like a spreadsheet, but hierarchical rather than tabular.' <br/>\n        ...\n      ))\n  )\n\n[\n  (html-utility-heading--no-link $heading \"<b>${tag-line}</b>\")\n\n  <table>\n  (map-list html-one-utility (get-utilities-to-show))\n  </table>\n])"
       }
    },
    "main" : "(fn ())",
@@ -24,7 +24,7 @@
       "self-url" : "(fn (action path workspace)\n  (=? path '')\n  (=? workspace /lib-what-u-need)\n\n  (= workspace\n    (if (defined? $workspace)\n      \"?_workspaceName=$workspace\" ''))\n\n  (sprintf /api/dpl%s/%s%s%s\n    $action\n    $self/name\n    $path\n    $workspace\n  ))"
    },
    "on-load" : "(fn ()\n  (= app-title 'What U Need')\n\n  (desc-read _ HTML-macros)\n\n  // Define the functions whose code is located as specified.\n  (def-hash-fn $self {\n    /html/pages [\n      html-page-error\n      html-page-top\n    ]\n\n    /html [\n      html-utility-heading\n      html-one-utility\n      html-controls\n    ]\n\n    /misc [\n      self-url\n      get-utilities-to-show\n    ]\n  })\n)",
-   "rcs-id" : "$Id: top-page,v 1.362 2013/04/15 20:44:45 apache Exp apache $",
+   "rcs-id" : "$Id: top-page,v 1.370 2013/04/16 17:09:39 apache Exp apache $",
    "request-from-client" : {
       "schema" : {
          "HTTP" : {
@@ -87,7 +87,7 @@
       },
       "999-about" : {
          "README" : "About this site",
-         "main" : "(fn ()\n  (reply-html\n    (html-app-template\n      (html-ul\n        (html-li\n          (html-a\n            {href /api/dplx/dpl-getting-started}\n            'Getting started with DPL'))))))"
+         "main" : "(fn ()\n  (reply-html\n    (html-app-template\n      (html-p 'This site is built with DPL to demonstrate some of its capabilities')\n      (html-ul\n        (html-li (html-a {href /api/dplx/dpl-getting-started}  'Getting started with DPL'))\n        (html-li 'Source on github: '\n                   (html-a {href https://github.com/RobGood/DPL}             DPL) ','\n                   (html-a {href https://github.com/RobGood/lib-dpl}         lib-dpl) ',' \n                   (html-a {href https://github.com/RobGood/lib-what-u-need} lib-what-u-need)\n        )\n        (html-li (html-a {href /api/dplx/get-DPL-dist}         'Download DPL'))\n      )\n      (html-p Licence)\n      (html-p Privacy)\n      (html-p Contact)\n    )))"
       }
    }
 }
