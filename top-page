@@ -1,13 +1,12 @@
 {
    "README" : "This app renders the site's top level page\n\nIt also renders pages for any utility found under\n/utilities which has a 'main' function.",
    "_dateCreated" : "Mon Apr  8 16:24:40 2013",
-   "_useCount" : 357,
+   "_useCount" : 359,
    "api-entry-points" : "// The names on the left represent request patterns that will be accepted.\n// The names on the right refer to the corresponding request handler named in /api-handler.\n\n{\n  GET/                      show-top-page\n  GET/utilities/~util-path* run-utility\n}",
    "api-handlers" : {
       "run-utility" : "(= path (join / ['' utilities @$req-util-path]))\n(def-hash-fn $self $path main)\n(if (fn? $main) (return (main)))\n\n(reply-html (html-app-template\n  (html-page-error \"Nothing found for $path\")))",
       "show-top-page" : "(reply-html (html-app-template (html-page-top)))"
    },
-   "edit-link.html" : "<a href=\"/api/dple/wall?_workspaceName=/lib-what-u-need\">edit source</a>",
    "html" : {
       "README" : "HTML rendering code",
       "html-controls" : "(def-fn edit-view-control-label (tail)\n  (=? tail '')\n  (concat (if (defined? $userid) edit view) \"$tail source\"))\n\n(def-fn html-controls-one (url label)\n  (if (defined? $url)\n    (html-a {href $url} $label)\n    $label))\n\n(fn () [\n  (html-controls-one (self-url e) (edit-view-control-label))\n])",
@@ -16,7 +15,7 @@
       "pages" : {
          "README" : "top level rendering functions, one per page",
          "html-page-error" : "(fn (text)\n[\n  (html-utility-heading $text)\n])",
-         "html-page-top" : "(fn ()\n (= heading \"<i>${app-title}</i> offers webapp utilities you need...\")\n (= tag-line '...') # because you\\'ve written or commisioned them.')\n\n/*\n    (html-p 'DPL is a decentralized social computing environment; '\n      (html-ul\n         'it\\'s like a wiki, but for writing programs rather than writing documents,' <br/>\n         'it\\'s like a spreadsheet, but hierarchical rather than tabular.'\n       ))\n*/\n\n[\n  (html-utility-heading--no-link $heading \"<b>${tag-line}</b>\")\n\n  <table>\n  (map-list html-one-utility (get-utilities-to-show))\n  </table>\n])"
+         "html-page-top" : "(fn ()\n (= heading \"<i>${app-title}</i> offers webapp utilities you need...\")\n (= tag-line '...') # because you\\'ve written or commisioned them.')\n\n (= tag-line\n   (html-p 'a decentralized social computing environment; '\n     (html-ul\n        'it\\'s like a wiki, but for writing programs rather than writing documents,' <br/>\n        'it\\'s like a spreadsheet, but hierarchical rather than tabular.' <br/>\n        ...\n      ))\n  )\n\n[\n  (html-utility-heading--no-link $heading \"<b>${tag-line}</b>\")\n\n  <table>\n  (map-list html-one-utility (get-utilities-to-show))\n  </table>\n])"
       }
    },
    "main" : "(fn ())",
@@ -25,7 +24,7 @@
       "self-url" : "(fn (action path workspace)\n  (=? path '')\n  (=? workspace /lib-what-u-need)\n\n  (= workspace\n    (if (defined? $workspace)\n      \"?_workspaceName=$workspace\" ''))\n\n  (sprintf /api/dpl%s/%s%s%s\n    $action\n    $self/name\n    $path\n    $workspace\n  ))"
    },
    "on-load" : "(fn ()\n  (= app-title 'What U Need')\n\n  (desc-read _ HTML-macros)\n\n  // Define the functions whose code is located as specified.\n  (def-hash-fn $self {\n    /html/pages [\n      html-page-error\n      html-page-top\n    ]\n\n    /html [\n      html-utility-heading\n      html-one-utility\n      html-controls\n    ]\n\n    /misc [\n      self-url\n      get-utilities-to-show\n    ]\n  })\n)",
-   "rcs-id" : "$Id: top-page,v 1.359 2013/04/15 13:39:26 apache Exp apache $",
+   "rcs-id" : "$Id: top-page,v 1.362 2013/04/15 20:44:45 apache Exp apache $",
    "request-from-client" : {
       "schema" : {
          "HTTP" : {
