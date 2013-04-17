@@ -1,7 +1,7 @@
 {
    "README" : "This app renders the site's top level page\n\nIt also renders pages for any utility found under\n/utilities which has a 'main' function.",
    "_dateCreated" : "Mon Apr  8 16:24:40 2013",
-   "_useCount" : 368,
+   "_useCount" : 371,
    "api-entry-points" : "// The names on the left represent request patterns that will be accepted.\n// The names on the right refer to the corresponding request handler named in /api-handler.\n\n{\n  GET/                      show-top-page\n  GET/utilities/~util-path* run-utility\n}",
    "api-handlers" : {
       "run-utility" : "(= path (join / ['' utilities @$req-util-path]))\n(def-hash-fn $self $path main)\n(if (fn? $main) (return (main)))\n\n(reply-html (html-app-template\n  (html-page-error \"Nothing found for $path\")))",
@@ -9,9 +9,9 @@
    },
    "html" : {
       "README" : "HTML rendering code",
-      "html-controls" : "(def-fn edit-view-control-label (tail)\n  (=? tail '')\n  (concat (if (defined? $userid) edit view) \"$tail source\"))\n\n(def-fn html-controls-one (url label)\n  (if (defined? $url)\n    (html-a {href $url} $label)\n    $label))\n\n(fn () [\n  (html-controls-one (self-url e) (edit-view-control-label))\n])",
+      "html-controls" : "(def-fn edit-view-control-label (tail)\n  (=? tail '')\n  (concat (if (defined? $userid) edit view) \"$tail top page source\"))\n\n(def-fn html-controls-one (url label)\n  (if (defined? $url)\n    (html-a {href $url} $label)\n    $label))\n\n(fn () [\n  (html-controls-one (self-url e) (edit-view-control-label))\n])",
       "html-one-utility" : "(fn (path -- rm-text title label)\n  (report ' >> (%s %s)' $. $path)\n\n  (= path    \"/utilities$path\")\n  (= rm-text (split '\\n' (hash-get $self $path README)))\n  (= title   (shift $rm-text))\n  (= label   (if (defined? $userid) Edit View))\n\n  [\n    <tr><td>\n      '<table width=\"100%\">'\n      <tr>\n      '<td align=\"left\">' (html-b $title) </td>\n      '<td align=\"right\" width=\"20%\">'\n          (bracket-link (html-a {href (self-url e $path)} \"<b>${label}</b>\"))\n          (bracket-link (html-a {href (self-url x $path)} '<b>Run</b>'))\n      </td>\n      </tr>\n      </table>\n    $rm-text\n    </td></tr>\n  ])",
-      "html-utility-heading" : "(def-fn html-utility-heading--no-link (text text2)\n  (html-utility-heading $text $text2 (true)))\n\n(fn (text text2 supress-link? -- url log-in-out)\n  (= url (if (! $supress-link?) (self-url x $path)))\n  (= log-in-out (if (defined? $userid) logout login))\n\n[\n  '<table width=\"100%\">' <tr>\n  <td>\n    (html-h 2 (html-controls-one $url $text))\n    (html-p $text2)\n  </td>\n  '<td valign=\"top\" align=\"right\">'\n    (if (defined? $userid) \" $userid ($workspace-name)\")\n    (bracket-link (html-a {href \"/api/dplx/user/$log-in-out\"}  $log-in-out))\n    (bracket-link (html-a {href  /api/dplx/top-page}           'back to top page'))\n    (bracket-link (html-a {href  /api/dple/top-page}           (edit-view-control-label)))\n   </td>\n  </tr></table>\n])",
+      "html-utility-heading" : "(def-fn html-utility-heading--no-link (text text2)\n  (html-utility-heading $text $text2 (true)))\n\n(fn (text text2 supress-link? -- text3 url log-in-out edit-url)\n  (if (list? $text2) (do\n    (= texts $text2)\n    (= text2 (shift $texts))\n    (= text3 (shift $texts))\n  ))\n\n  (= url (if (! $supress-link?) (self-url x $path)))\n  (= log-in-out (if (defined? $userid) logout login))\n  (= edit-url /api/dple/top-page?_workspaceName=/lib-what-u-need)\n\n[\n  '<table width=\"100%\">' <tr>\n  <td>\n    (html-h 2 (html-controls-one $url $text))\n    (html-p $text2)\n  </td>\n  '<td valign=\"top\" align=\"right\">'\n    (if (defined? $userid) \" $userid ($workspace-name)\")\n    (bracket-link (html-a {href \"/api/dplx/user/$log-in-out\"}  $log-in-out))\n    (bracket-link (html-a {href  /api/dplx/top-page}           'back to top page'))\n    (bracket-link (html-a {href  $edit-url}                    (edit-view-control-label)))\n    (if (defined? $text3) [ <br/> $text3 ])\n   </td>\n  </tr></table>\n])",
       "pages" : {
          "README" : "top level rendering functions, one per page",
          "html-page-error" : "(fn (text)\n[\n  (html-utility-heading $text)\n])",
@@ -24,7 +24,7 @@
       "self-url" : "(fn (action path workspace)\n  (=? path '')\n  (=? workspace /lib-what-u-need)\n\n  (= workspace\n    (if (defined? $workspace)\n      \"?_workspaceName=$workspace\" ''))\n\n  (sprintf /api/dpl%s/%s%s%s\n    $action\n    $self/name\n    $path\n    $workspace\n  ))"
    },
    "on-load" : "(fn ()\n  (= app-title 'What U Need')\n\n  (desc-read _ HTML-macros)\n\n  // Define the functions whose code is located as specified.\n  (def-hash-fn $self {\n    /html/pages [\n      html-page-error\n      html-page-top\n    ]\n\n    /html [\n      html-utility-heading\n      html-one-utility\n      html-controls\n    ]\n\n    /misc [\n      self-url\n      get-utilities-to-show\n    ]\n  })\n)",
-   "rcs-id" : "$Id: top-page,v 1.371 2013/04/17 04:16:41 apache Exp apache $",
+   "rcs-id" : "$Id: top-page,v 1.374 2013/04/17 18:31:08 apache Exp apache $",
    "request-from-client" : {
       "schema" : {
          "HTTP" : {
