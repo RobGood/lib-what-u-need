@@ -3,10 +3,12 @@
       "10GOTO10" : "I want to get 10goto10.com and put this there.",
       "Blogz" : "This is a placeholder for some bloging thing...",
       "Bugz" : "This is a placeholder for some bug tracking thing...",
+      "README.info" : "This updates the README.info cache.",
       "demo-StrongAPI" : "This demos StrongAPI usage.",
       "purl" : "<em>This</em> is a PURL server.",
       "rss" : "This class generates (very basic) RSS v2.0 XML",
       "top-page" : "This app renders the site's top level page",
+      "upload" : "This is the endpoint for the upload form.",
       "wall" : "Write to All"
    },
    "README" : "This updates the README.info cache.",
@@ -15,6 +17,6 @@
    "info" : "(fn () (hash-get $self / Info))",
    "main" : "(fn () (reply-json (update)))",
    "on-load" : "(fn ()\n  (def-hash-fn $self {\n    / [\n      info\n      update\n    ]\n  })\n)",
-   "rcs-id" : "$Id: README.info,v 1.2 2013/04/18 04:11:11 apache Exp apache $",
+   "rcs-id" : "$Id: README.info,v 1.4 2013/04/18 19:20:58 apache Exp apache $",
    "update" : "(def-fn update-one (d-name)\n  (desc-read d $d-name {no-cache 1 no-on-load 1})\n\n  (if (undef? (= rm (hash-get $d / README)))\n    (= rm (hash-get $d / 00)))\n      \n  (if (string? $rm)\n    (hash-set $out / $d-name (first (split '\\n' $rm)))))\n\n(fn ()\n  (= out  {})\n  (= name $self/name)\n\n  (foreach d-name (desc-list *)\n    (report 'Updating %s for %s...' $name $d-name)\n\n    (catch\n      (update-one $d-name)\n      (report-vars _err _cs)))\n\n  (hash-set $self / Info $out)\n\n  (desc-write $self $name)\n\n  $out\n)"
 }
