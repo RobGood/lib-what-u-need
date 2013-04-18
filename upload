@@ -1,0 +1,26 @@
+{
+   "README" : "This is the endpoint for the upload form.",
+   "_dateCreated" : "Mon Apr  1 12:56:01 2013",
+   "_useCount" : 44,
+   "api-entry-points" : "{\n  GET/         usage\n  POST/~args*  upload\n}",
+   "api-handlers" : {
+      "upload" : "(= info (mime-parse (hash-get $req-info / request-content)))\n(= data (hash-clear $info / data))\n\n(= name1 (hash-get $info /Content-Disposition name))\n(= name2 (hash-get $info /Content-Disposition filename))\n(= content-type (hash-get $info /headers Content-Type))\n(= path (join / $req-args))\n\n(= var-name-data (sprintf <%s/%s/%s>      $name1 $path $name2))\n(= var-name-ct   (sprintf <%s/%s/%s.type> $name1 $path $name2 $content-type))\n\n(= $var-name-data $data)\n(= $var-name-ct   $content-type)\n\n(= msg \"upload saved to var $var-name-data\")\n\n(reply-json $[msg var-name-data var-name-ct info req-args])",
+      "usage" : "(desc-read _ HTML-macros)\n\n(= title 'upload usage')\n\n(reply-html (html-html\n  (html-head\n    (html-title $title))\n  (html-body {}\n    (html-h 1 $title)\n    (html-p\n      (bracket-link (html-link /api/dple/upload?_workspaceName=/lib.DPL Edit))\n      (sprintf ' -- %s (%s)' $userid $workspace-name))\n\n    (html-form-upload\n      /api/dplx/upload/foo/bar\n      'Choose a file to upload: '\n      uploaded-file-name)\n  )))"
+   },
+   "main" : "(fn ())",
+   "rcs-id" : "$Id: upload,v 1.48 2013/04/01 19:39:24 apache Exp rcgood $",
+   "request-from-client" : {
+      "schema" : {
+         "HTTP" : {
+            "GET" : {
+               ".on-match." : "(hash-eval $self /api-handlers usage)"
+            },
+            "POST" : {
+               "~args*" : {
+                  ".on-match." : "(hash-eval $self /api-handlers upload)"
+               }
+            }
+         }
+      }
+   }
+}
