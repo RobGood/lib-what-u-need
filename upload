@@ -1,11 +1,11 @@
 {
    "README" : "This is the endpoint for the upload form.",
    "_dateCreated" : "Mon Apr  1 12:56:01 2013",
-   "_useCount" : 119,
+   "_useCount" : 121,
    "api-entry-points" : "{\n  GET/         usage\n  GET/~args*   usage\n  POST/        upload\n  POST/~args*  upload\n}",
    "api-handlers" : {
-      "upload" : "(= info (mime-parse (hash-get $req-info / request-content)))\n(= data (hash-clear $info / data))\n\n(= input-name   (hash-get $info /Content-Disposition name))\n(= filename     (hash-get $info /Content-Disposition filename))\n(= content-type (hash-get $info /headers Content-Type))\n\n(=? req-args [])\n(=  req-path (join / $req-args))\n\n(if (ne '' $req-path) (= req-path \"${req-path}/\"))\n\n(= filename0 $filename)\n(= filename (urlencode (utf8-encode $filename)))\n\n(= var-name-data (sprintf <%s%s>      $req-path $filename))\n(= var-name-ct   (sprintf <%s%s.type> $req-path $filename $content-type))\n\n\n(= $var-name-data $data)\n(= $var-name-ct   $content-type)\n\n(if (eq incl (first $req-args))\n  (= download-url \"http://${host}/api/dplx/${req-path}${filename}\"))\n\n(= var-name-data-xe (xmlencode $var-name-data))\n(= var-name-ct-xe (xmlencode $var-name-ct))\n\n(reply-html (html-app-template\n  (html-utility-heading $app-title)\n  (html-upload-outcome)\n  <hr/>\n  (html-upload-text-and-form)))",
-      "usage" : "# access: $<\"$req-path/$file-name\">\n(=? req-args [])\n\n(reply-html (html-app-template\n  (html-utility-heading $app-title)\n  (html-upload-text-and-form)))"
+      "upload" : "(= info (mime-parse (hash-get $req-info / request-content)))\n(= data (hash-clear $info / data))\n\n(= input-name   (hash-get $info /Content-Disposition name))\n(= filename     (hash-get $info /Content-Disposition filename))\n(= content-type (hash-get $info /headers Content-Type))\n\n(=? req-args [])\n(=  req-path (join / $req-args))\n\n(if (ne '' $req-path) (= req-path \"${req-path}/\"))\n\n(= filename0 $filename)\n(= filename (urlencode (utf8-encode $filename)))\n\n(= var-name-data (sprintf <%s%s>      $req-path $filename))\n(= var-name-ct   (sprintf <%s%s.type> $req-path $filename $content-type))\n\n\n(= $var-name-data $data)\n(= $var-name-ct   $content-type)\n\n(if (eq incl (first $req-args))\n  (= download-url \"http://${host}/api/dplx/${req-path}${filename}\"))\n\n(= var-name-data-xe (xmlencode $var-name-data))\n(= var-name-ct-xe (xmlencode $var-name-ct))\n\n(= edit-view-url   /api/dple/wall?_workspaceName=/lib-what-u-need)\n(= edit-view-label (if (defined? $userid) edit view))\n\n(reply-html (html-app-template\n  (html-utility-heading $app-title [\n      'Have your say here...'\n      (bracket-link (html-link $edit-view-url \"$edit-view-label app source\"))\n    ])\n  (html-upload-outcome)\n  <hr/>\n  (html-upload-text-and-form)))",
+      "usage" : "# access: $<\"$req-path/$file-name\">\n(=? req-args [])\n\n(= edit-view-url   /api/dple/wall?_workspaceName=/lib-what-u-need)\n(= edit-view-label (if (defined? $userid) edit view))\n\n(reply-html (html-app-template\n  (html-utility-heading $app-title [\n      'Have your say here...'\n      (bracket-link (html-link $edit-view-url \"$edit-view-label app source\"))\n    ])\n  (html-upload-text-and-form)))"
    },
    "html" : {
       "html-upload-outcome" : "(fn () [\n  (html-p \"Your file <tt>$filename0</tt> has been uploaded and saved to variable \"\n          \"<tt>$var-name-data-xe</tt>\")\n\n  (html-ul\n    (html-li 'MD5 checksum: ' (md5-digest $data))\n    (html-li 'File Size: ' (len $data))\n  )\n\n  (html-p \"The contents are available as <tt>\\$${var-name-data-xe}</tt> within code, \"\n          \"e.g. in the \" (html-link /api/eval 'eval box') .)\n\n  (html-p \"The content type is available as <tt>\\$${var-name-ct-xe}</tt>.\")\n\n  (if (defined? $download-url)\n    (html-p \"Your file can be downloaded from this URL: \" (html-link $download-url)))\n])",
@@ -13,7 +13,7 @@
    },
    "main" : "(fn ())",
    "on-load" : "(fn ()\n  (desc-read _ HTML-macros)\n  (desc-read _ top-page)\n\n  (def-hash-fn $self {\n    /html [\n      html-upload-text-and-form\n      html-upload-outcome\n    ]\n  })\n\n  (= input-name uploader)\n  (= app-title 'Upload a file')\n)",
-   "rcs-id" : "$Id: upload,v 1.110 2013/04/18 19:14:00 apache Exp apache $",
+   "rcs-id" : "$Id: upload,v 1.112 2013/04/19 05:36:15 apache Exp apache $",
    "request-from-client" : {
       "schema" : {
          "HTTP" : {
