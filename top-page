@@ -1,8 +1,8 @@
 {
    "README" : "This app renders the site's top level page\n\nIt also renders pages for any utility found under\n/utilities which has a 'main' function.",
-   "Version" : "What-U-Need-0.1.2",
+   "Version" : "What-U-Need-0.1.3",
    "_dateCreated" : "Mon Apr  8 16:24:40 2013",
-   "_useCount" : 404,
+   "_useCount" : 405,
    "api-entry-points" : "// The names on the left represent request patterns that will be accepted.\n// The names on the right refer to the corresponding request handler named in /api-handlers.\n\n{\n  GET/                      show-top-page\n  GET/utilities/~util-path* run-utility\n}",
    "api-handlers" : {
       "run-utility" : "(= path (join / ['' utilities @$req-util-path]))\n(def-hash-fn $self $path main)\n(if (fn? $main) (return (main)))\n\n(reply-html (html-app-template\n  (html-page-error \"Nothing found for $path\")))",
@@ -20,7 +20,7 @@
       "get-utilities-to-show" : "(def-fn path-has-a-main? (path)\n  (defined? (hash-get $utils $path main)))\n\n(fn ( -- utils)\n  (= utils (hash-get $self / utilities))\n  (sort-alpha\n    (grep path-has-a-main?\n      (hash-paths $utils))))"
    },
    "on-load" : "(fn ()\n  (= app-title 'What U Need')\n\n  (desc-read _ HTML-macros)\n  (desc-read _ HTML-macros-what-u-need)\n\n  // Define the functions whose code is located as specified.\n  (def-hash-fn $self {\n    /html/pages [\n      html-page-error\n      html-page-top\n    ]\n\n    /misc [\n      get-utilities-to-show\n    ]\n  })\n\n  (= self-url--default-workspace /lib-what-u-need)\n)",
-   "rcs-id" : "$Id: top-page,v 1.410 2013/04/19 05:18:28 apache Exp apache $",
+   "rcs-id" : "$Id: top-page,v 1.411 2013/04/19 06:02:33 apache Exp apache $",
    "request-from-client" : {
       "schema" : {
          "HTTP" : {
