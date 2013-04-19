@@ -1,8 +1,8 @@
 {
    "README" : "This app renders the site's top level page\n\nIt also renders pages for any utility found under\n/utilities which has a 'main' function.",
-   "Version" : "What-U-Need-0.1.3",
+   "Version" : "What-U-Need-0.1.4",
    "_dateCreated" : "Mon Apr  8 16:24:40 2013",
-   "_useCount" : 405,
+   "_useCount" : 408,
    "api-entry-points" : "// The names on the left represent request patterns that will be accepted.\n// The names on the right refer to the corresponding request handler named in /api-handlers.\n\n{\n  GET/                      show-top-page\n  GET/utilities/~util-path* run-utility\n}",
    "api-handlers" : {
       "run-utility" : "(= path (join / ['' utilities @$req-util-path]))\n(def-hash-fn $self $path main)\n(if (fn? $main) (return (main)))\n\n(reply-html (html-app-template\n  (html-page-error \"Nothing found for $path\")))",
@@ -12,7 +12,7 @@
       "pages" : {
          "README" : "top level rendering functions, one per page",
          "html-page-error" : "(fn (text)\n[\n  (html-utility-heading $text)\n])",
-         "html-page-top" : "(def-fn html-system-version ()\n  (html-p (sprintf %s-%s/%s\n            (hash-get $self / Version)\n            (desc-read _ what-u-need-timestamp)\n            (desc-read _ system-version))))\n\n(fn ()\n (= heading \"<i>${app-title}</i> : webapp utilities you need ...\")\n (= tag-line\n   (html-p 'a decentralized social computing environment; '\n     (html-ul\n        'it\\'s like a wiki, but for writing webapps rather than writing documents,' <br/>\n        'it\\'s like a spreadsheet, but hierarchical rather than tabular.' <br/>\n        ...\n      ))\n  )\n\n[\n  (html-utility-heading--no-link $heading \"<b>${tag-line}</b>\")\n\n  <table>\n  (map-list html-one-utility (get-utilities-to-show))\n  </table>\n\n  (html-system-version)\n])"
+         "html-page-top" : "(def-fn html-system-version ()\n  (html-p (sprintf %s-%s/%s\n            (hash-get $self / Version)\n            (desc-read _ what-u-need-timestamp)\n            (desc-read _ system-version))))\n\n(fn ()\n (= heading \"<i>${app-title}</i> : webapp utilities you need ...\")\n (= tag-line\n   (html-p 'a decentralized social computing environment; '\n     (html-ul\n        'it\\'s like a wiki, but for writing webapps rather than writing documents,' <br/>\n        'it\\'s like a spreadsheet, but hierarchical rather than tabular.' <br/>\n        ...\n      ))\n  )\n\n[\n  (html-utility-heading--no-link $heading \"<b>${tag-line}</b>\")\n/*\n  <table>\n  (map-list html-one-utility (get-utilities-to-show))\n  </table>\n*/\n  (html-table-grid (get-utilities-to-show) 3 html-one-utility) \n\n  (html-system-version)\n])"
       }
    },
    "main" : "(fn ())",
@@ -20,7 +20,7 @@
       "get-utilities-to-show" : "(def-fn path-has-a-main? (path)\n  (defined? (hash-get $utils $path main)))\n\n(fn ( -- utils)\n  (= utils (hash-get $self / utilities))\n  (sort-alpha\n    (grep path-has-a-main?\n      (hash-paths $utils))))"
    },
    "on-load" : "(fn ()\n  (= app-title 'What U Need')\n\n  (desc-read _ HTML-macros)\n  (desc-read _ HTML-macros-what-u-need)\n\n  // Define the functions whose code is located as specified.\n  (def-hash-fn $self {\n    /html/pages [\n      html-page-error\n      html-page-top\n    ]\n\n    /misc [\n      get-utilities-to-show\n    ]\n  })\n\n  (= self-url--default-workspace /lib-what-u-need)\n)",
-   "rcs-id" : "$Id: top-page,v 1.411 2013/04/19 06:02:33 apache Exp apache $",
+   "rcs-id" : "$Id: top-page,v 1.414 2013/04/19 21:03:54 apache Exp apache $",
    "request-from-client" : {
       "schema" : {
          "HTTP" : {
