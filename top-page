@@ -1,8 +1,8 @@
 {
    "README" : "This app renders the site's top level page\n\nIt also renders pages for any utility found under\n/utilities which has a 'main' function.",
-   "Version" : "What-U-Need-0.1.4",
+   "Version" : "What-U-Need-0.1.5",
    "_dateCreated" : "Mon Apr  8 16:24:40 2013",
-   "_useCount" : 408,
+   "_useCount" : 420,
    "api-entry-points" : "// The names on the left represent request patterns that will be accepted.\n// The names on the right refer to the corresponding request handler named in /api-handlers.\n\n{\n  GET/                      show-top-page\n  GET/utilities/~util-path* run-utility\n}",
    "api-handlers" : {
       "run-utility" : "(= path (join / ['' utilities @$req-util-path]))\n(def-hash-fn $self $path main)\n(if (fn? $main) (return (main)))\n\n(reply-html (html-app-template\n  (html-page-error \"Nothing found for $path\")))",
@@ -12,7 +12,7 @@
       "pages" : {
          "README" : "top level rendering functions, one per page",
          "html-page-error" : "(fn (text)\n[\n  (html-utility-heading $text)\n])",
-         "html-page-top" : "(def-fn html-system-version ()\n  (html-p (sprintf %s-%s/%s\n            (hash-get $self / Version)\n            (desc-read _ what-u-need-timestamp)\n            (desc-read _ system-version))))\n\n(fn ()\n (= heading \"<i>${app-title}</i> : webapp utilities you need ...\")\n (= tag-line\n   (html-p 'a decentralized social computing environment; '\n     (html-ul\n        'it\\'s like a wiki, but for writing webapps rather than writing documents,' <br/>\n        'it\\'s like a spreadsheet, but hierarchical rather than tabular.' <br/>\n        ...\n      ))\n  )\n\n[\n  (html-utility-heading--no-link $heading \"<b>${tag-line}</b>\")\n/*\n  <table>\n  (map-list html-one-utility (get-utilities-to-show))\n  </table>\n*/\n  (html-table-grid (get-utilities-to-show) 3 html-one-utility) \n\n  (html-system-version)\n])"
+         "html-page-top" : "(def-fn html-system-version ()\n  (html-p (sprintf %s-%s/%s\n            (hash-get $self / Version)\n            (desc-read _ what-u-need-timestamp)\n            (desc-read _ system-version))))\n\n(fn ( -- heading tag-line table-cfg id)\n (= heading \"<i>${app-title}</i> : webapp utilities you need ...\")\n (= tag-line\n   (html-p 'a decentralized social computing environment; '\n     (html-ul\n        'it\\'s like a wiki, but for writing webapps rather than writing documents,' <br/>\n        'it\\'s like a spreadsheet, but hierarchical rather than tabular.' <br/>\n        ...\n      ))\n  )\n\n  (= table-cfg {\n    table-tag '<table width=\"100%\" bgcolor=\"#808080\" cellspacing=\"10\">'\n    td-tag    '<td valign=\"top\">'\n  })\n\n  (= id 0)\n[\n  (html-utility-heading--no-link $heading \"<b>${tag-line}</b>\")\n  (html-table-grid $table-cfg (get-utilities-to-show) 3 html-one-utility)\n  (html-system-version)\n])"
       }
    },
    "main" : "(fn ())",
@@ -20,7 +20,7 @@
       "get-utilities-to-show" : "(def-fn path-has-a-main? (path)\n  (defined? (hash-get $utils $path main)))\n\n(fn ( -- utils)\n  (= utils (hash-get $self / utilities))\n  (sort-alpha\n    (grep path-has-a-main?\n      (hash-paths $utils))))"
    },
    "on-load" : "(fn ()\n  (= app-title 'What U Need')\n\n  (desc-read _ HTML-macros)\n  (desc-read _ HTML-macros-what-u-need)\n\n  // Define the functions whose code is located as specified.\n  (def-hash-fn $self {\n    /html/pages [\n      html-page-error\n      html-page-top\n    ]\n\n    /misc [\n      get-utilities-to-show\n    ]\n  })\n\n  (= self-url--default-workspace /lib-what-u-need)\n)",
-   "rcs-id" : "$Id: top-page,v 1.414 2013/04/19 21:03:54 apache Exp apache $",
+   "rcs-id" : "$Id: top-page,v 1.428 2013/04/22 14:38:03 apache Exp apache $",
    "request-from-client" : {
       "schema" : {
          "HTTP" : {
@@ -84,14 +84,16 @@
          "README" : "Discussion threads",
          "main" : "(fn () (reply-text 'not implemented yet.'))"
       },
+      "999-about" : {
+         "README" : "About this site\n\nLicence\n\nPrivacy\n\nContact",
+         "main" : "(fn ()\n  (reply-html\n    (html-app-template\n      (html-p 'This site is built with DPL to demonstrate some of its capabilities')\n      (html-ul\n        (html-li (html-a {href /api/dplx/dpl-getting-started}  'Getting started with DPL'))\n        (html-li 'Source on github: '\n                   (html-a {href https://github.com/RobGood/DPL}             DPL) ','\n                   (html-a {href https://github.com/RobGood/lib-dpl}         lib-dpl) ',' \n                   (html-a {href https://github.com/RobGood/lib-what-u-need} lib-what-u-need)\n        )\n        (html-li (html-a {href /api/dplx/get-DPL-dist}         'Download DPL'))\n      )\n      (html-p Licence)\n      (html-p Privacy)\n      (html-p Contact)\n    )))"
+      }
+   },
+   "utilities-off" : {
       "200-primal" : {
          "README" : "Using Primal's data service",
          "controls.html" : "<a href=\"/api/dple/primal-getting-started?_workspaceName=/lib-primal\">edit app source</a>",
          "main" : "(fn () (redirect-to \"http://${host}/api/dplx/primal-getting-started?_workspaceName=%2F\"))"
-      },
-      "999-about" : {
-         "README" : "About this site\n\nLicence\n\nPrivacy\n\nContact",
-         "main" : "(fn ()\n  (reply-html\n    (html-app-template\n      (html-p 'This site is built with DPL to demonstrate some of its capabilities')\n      (html-ul\n        (html-li (html-a {href /api/dplx/dpl-getting-started}  'Getting started with DPL'))\n        (html-li 'Source on github: '\n                   (html-a {href https://github.com/RobGood/DPL}             DPL) ','\n                   (html-a {href https://github.com/RobGood/lib-dpl}         lib-dpl) ',' \n                   (html-a {href https://github.com/RobGood/lib-what-u-need} lib-what-u-need)\n        )\n        (html-li (html-a {href /api/dplx/get-DPL-dist}         'Download DPL'))\n      )\n      (html-p Licence)\n      (html-p Privacy)\n      (html-p Contact)\n    )))"
       }
    }
 }
